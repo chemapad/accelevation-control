@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0c4381">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Control de herramientas para obra de construcción - Funciona offline">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <title>Accelevation — Tool Control</title>
+</head>
+
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="app-header">
+    <div class="header-logo">
+      <img src="https://www.accelevation.com/assets/img/logo.svg" alt="Accelevation Logo" class="app-logo">
+      <h1>Tool Control</h1>
+    </div>
+    <button id="btnConfig" class="btn-icon" title="Configuración" data-i18n-title="config_title">⚙️</button>
+  </header>
+
+  <!-- ===== TABS ===== -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="prestamos" data-i18n="tab_loans">📋 Préstamos</button>
+    <button class="tab" data-tab="herramientas" data-i18n="tab_tools">🔧 Herramientas</button>
+    <button class="tab" data-tab="trabajadores" data-tab-name="trabajadores" data-i18n="tab_workers">👷
+      Trabajadores</button>
+  </nav>
+
+  <!-- ===== VISTA: PRÉSTAMOS ACTIVOS ===== -->
+  <main id="view-prestamos" class="view active">
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat">
+        <span class="stat-num" id="statTotal">0</span>
+        <span class="stat-label" data-i18n="stat_total">Total</span>
+      </div>
+      <div class="stat stat-green">
+        <span class="stat-num" id="statDisponibles">0</span>
+        <span class="stat-label" data-i18n="stat_available">Disponibles</span>
+      </div>
+      <div class="stat stat-red">
+        <span class="stat-num" id="statPrestadas">0</span>
+        <span class="stat-label" data-i18n="stat_loaned">Prestadas</span>
+      </div>
+    </div>
+
+    <!-- Botón nuevo préstamo -->
+    <button id="btnNuevoPrestamo" class="btn-primary btn-full" data-i18n="btn_new_loan">
+      <span>➕</span> Nuevo Préstamo
+    </button>
+
+    <!-- Lista de préstamos agrupados por trabajador -->
+    <div id="listaPrestamos" class="cards-list">
+      <p class="empty-state" data-i18n="empty_loans">No hay préstamos activos</p>
+    </div>
+
+    <!-- Historial -->
+    <button id="btnHistorial" class="btn-secondary btn-full" style="margin-top:12px;" data-i18n="btn_history">
+      📜 Historial de Hoy
+    </button>
+  </main>
+
+  <!-- ===== VISTA: CATÁLOGO DE HERRAMIENTAS ===== -->
+  <main id="view-herramientas" class="view">
+    <div class="view-header">
+      <input type="search" id="searchHerramientas" class="search-input" placeholder="Buscar herramienta..."
+        data-i18n-placeholder="placeholder_search_tool">
+      <button id="btnExportExcel" class="btn-secondary" data-i18n="btn_export_excel">📊 Excel</button>
+      <button id="btnAddHerramienta" class="btn-primary" data-i18n="btn_add">➕ Agregar</button>
+    </div>
+    <div id="listaHerramientas" class="cards-list">
+      <p class="empty-state" data-i18n="empty_tools">No hay herramientas registradas</p>
+    </div>
+  </main>
+
+  <!-- ===== VISTA: TRABAJADORES ===== -->
+  <main id="view-trabajadores" class="view">
+    <div class="view-header">
+      <input type="search" id="searchTrabajadores" class="search-input" placeholder="Buscar trabajador..."
+        data-i18n-placeholder="placeholder_search_worker">
+      <button id="btnCargaMasiva" class="btn-secondary" data-i18n="btn_bulk_load">📦 Carga Masiva</button>
+      <button id="btnAddTrabajador" class="btn-primary" data-i18n="btn_add">➕ Agregar</button>
+    </div>
+    <div id="listaTrabajadores" class="cards-list">
+      <p class="empty-state" data-i18n="empty_workers">No hay trabajadores registrados</p>
+    </div>
+  </main>
+
+  <!-- ===== MODAL: AGREGAR/EDITAR HERRAMIENTA ===== -->
+  <div id="modalHerramienta" class="modal-overlay">
+    <div class="modal">
+      <h2 id="modalHerramientaTitle" data-i18n="modal_tool_add">Agregar Herramienta</h2>
+      <form id="formHerramienta">
+        <input type="hidden" id="herramientaId">
+        <div class="form-group">
+          <label for="herramientaNombre" data-i18n="label_name">Nombre</label>
+          <input type="text" id="herramientaNombre" placeholder="Ej: Rotomartillo Bosch"
+            data-i18n-placeholder="placeholder_tool_name" required>
+        </div>
+        <div class="form-group">
+          <label for="herramientaCategoria" data-i18n="label_category">Categoría</label>
+          <input type="text" id="herramientaCategoria" list="listaCategorias" placeholder="Ej: Eléctrica, Manual..."
+            data-i18n-placeholder="placeholder_category">
+          <datalist id="listaCategorias">
+            <option value="Eléctrica">
+            <option value="Manual">
+            <option value="Medición">
+            <option value="Limpieza">
+            <option value="Seguridad">
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label for="herramientaCodigo" data-i18n="label_code">Código / ID (opcional)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="herramientaCodigo" placeholder="Ej: HRR-001" style="flex: 1;">
+            <button type="button" class="btn-secondary" id="btnScanOCR" style="padding: 12px; font-size: 1.2rem;"
+              title="Escanear Código">📷</button>
+          </div>
+          <input type="file" id="ocrInput" accept="image/*" capture="environment" hidden>
+          <div id="ocrCandidates" class="ocr-candidates-container"></div>
+        </div>
+        <div class="form-group">
+          <label for="herramientaNotas" data-i18n="label_notes">Notas (opcional)</label>
+          <input type="text" id="herramientaNotas" placeholder="Ej: Color rojo, serie XYZ"
+            data-i18n-placeholder="placeholder_notes">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="cerrarModal('modalHerramienta')"
+            data-i18n="btn_cancel">Cancelar</button>
+          <button type="submit" class="btn-primary" data-i18n="btn_save">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: AGREGAR/EDITAR TRABAJADOR ===== -->
+  <div id="modalTrabajador" class="modal-overlay">
+    <div class="modal">
+      <h2 id="modalTrabajadorTitle" data-i18n="modal_worker_add">Agregar Trabajador</h2>
+      <form id="formTrabajador">
+        <input type="hidden" id="trabajadorId">
+        <div class="form-group">
+          <label for="trabajadorNombre" data-i18n="label_full_name">Nombre completo</label>
+          <input type="text" id="trabajadorNombre" placeholder="Ej: Juan Pérez"
+            data-i18n-placeholder="placeholder_worker_name" required>
+        </div>
+        <div class="form-group">
+          <label for="trabajadorPuesto" data-i18n="label_position">Puesto (opcional)</label>
+          <input type="text" id="trabajadorPuesto" placeholder="Ej: Electricista"
+            data-i18n-placeholder="placeholder_position">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="cerrarModal('modalTrabajador')"
+            data-i18n="btn_cancel">Cancelar</button>
+          <button type="submit" class="btn-primary" data-i18n="btn_save">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: NUEVO PRÉSTAMO EN LOTE ===== -->
+  <div id="modalPrestamo" class="modal-overlay">
+    <div class="modal modal-large">
+      <h2 data-i18n="modal_loan_title">Nuevo Préstamo</h2>
+      <form id="formPrestamo">
+        <!-- Paso 1: Seleccionar trabajador -->
+        <div class="form-group">
+          <label for="prestamoTrabajador" data-i18n="label_worker">Trabajador</label>
+          <select id="prestamoTrabajador" required>
+            <option value="" data-i18n="label_worker">— Seleccionar trabajador —</option>
+          </select>
+        </div>
+        <!-- Paso 2: Seleccionar herramientas -->
+        <div class="form-group">
+          <label data-i18n="label_tools_avail">Herramientas disponibles</label>
+          <div id="checklistHerramientas" class="checklist">
+            <p class="empty-state" data-i18n="empty_tools">No hay herramientas disponibles</p>
+          </div>
+        </div>
+        <!-- Fecha/hora auto -->
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="label_date">Fecha</label>
+            <input type="text" id="prestamoFecha" readonly>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_hour">Hora</label>
+            <input type="text" id="prestamoHora" readonly>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="prestamoNotas" data-i18n="label_notes">Notas (opcional)</label>
+          <input type="text" id="prestamoNotas" placeholder="Ej: Para trabajo en 2do piso"
+            data-i18n-placeholder="placeholder_notes">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="cerrarModal('modalPrestamo')"
+            data-i18n="btn_cancel">Cancelar</button>
+          <button type="submit" class="btn-primary" data-i18n="btn_confirm_loan">✅ Confirmar Préstamo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: HISTORIAL ===== -->
+  <div id="modalHistorial" class="modal-overlay">
+    <div class="modal modal-large">
+      <h2 data-i18n="modal_history_title">📜 Historial de Hoy</h2>
+      <div id="listaHistorial" class="cards-list">
+        <p class="empty-state" data-i18n="empty_history">No hay registros hoy</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="cerrarModal('modalHistorial')"
+          data-i18n="btn_close">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalConfig" class="modal-overlay">
+    <div class="modal">
+      <h2 data-i18n="config_title">⚙️ Configuración</h2>
+
+      <div class="config-section">
+        <h3 data-i18n="config_lang_title">🌐 Idioma / Language</h3>
+        <div class="form-row">
+          <button onclick="setLanguage('es')" class="btn-secondary btn-full">Español 🇪🇸</button>
+          <button onclick="setLanguage('en')" class="btn-secondary btn-full">English 🇺🇸</button>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3 data-i18n="config_backup_title">💾 Respaldo de Datos</h3>
+        <p class="config-desc" data-i18n="config_backup_desc">Exporta tus datos para compartir con el otro turno o como
+          respaldo de seguridad.</p>
+        <button id="btnExportar" class="btn-primary btn-full" data-i18n="btn_export">📤 Exportar Respaldo</button>
+      </div>
+
+      <div class="config-section">
+        <h3 data-i18n="config_import_title">📥 Importar Datos</h3>
+        <p class="config-desc" data-i18n="config_import_desc">Carga un respaldo recibido del otro turno. <strong>⚠️ Esto
+            reemplaza todos los datos actuales.</strong></p>
+        <label class="btn-secondary btn-full btn-file">
+          <span data-i18n="btn_import">📥 Importar Respaldo</span>
+          <input type="file" id="inputImportar" accept=".json" hidden>
+        </label>
+      </div>
+
+      <div class="config-section">
+        <h3 data-i18n="config_whatsapp_title">📋 Compartir por WhatsApp</h3>
+        <p class="config-desc" data-i18n="config_whatsapp_desc">Genera un resumen de texto de los préstamos activos para
+          enviar por WhatsApp.</p>
+        <button id="btnCompartirWA" class="btn-whatsapp btn-full" data-i18n="btn_whatsapp">📱 Generar Resumen
+          WhatsApp</button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="cerrarModal('modalConfig')"
+          data-i18n="btn_close">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: CARGA MASIVA TRABAJADORES ===== -->
+  <div id="modalCargaMasiva" class="modal-overlay">
+    <div class="modal modal-large">
+      <h2 data-i18n="modal_bulk_title">📦 Carga Masiva de Trabajadores</h2>
+      <p class="config-desc" data-i18n="modal_bulk_desc">Pega una lista de nombres, uno por línea.</p>
+      <form id="formCargaMasiva">
+        <div class="form-group">
+          <textarea id="listaNombresMasiva" rows="10" placeholder="Pega los nombres aquí..."
+            data-i18n-placeholder="placeholder_bulk" required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="cerrarModal('modalCargaMasiva')"
+            data-i18n="btn_cancel">Cancelar</button>
+          <button type="submit" class="btn-primary" data-i18n="btn_bulk_load_start">🚀 Cargar Trabajadores</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: DEVOLUCIÓN EN LOTE ===== -->
+  <div id="modalDevolucion" class="modal-overlay">
+    <div class="modal modal-large">
+      <h2 data-i18n="modal_return_title">Devolver Herramientas</h2>
+      <p id="devolucionTrabajadorNombre" class="devolucion-worker"></p>
+      <div id="checklistDevolucion" class="checklist"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="cerrarModal('modalDevolucion')"
+          data-i18n="btn_cancel">Cancelar</button>
+        <button id="btnConfirmarDevolucion" class="btn-primary" data-i18n="btn_return_selected">✅ Devolver
+          Seleccionadas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: CONFIRMACIÓN GENÉRICA ===== -->
+  <div id="modalConfirm" class="modal-overlay">
+    <div class="modal">
+      <h2 id="modalConfirmTitle">Confirmar</h2>
+      <p id="modalConfirmMessage" style="margin-bottom: 20px; color: var(--text-secondary); line-height: 1.5;"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="btnConfirmCancel" data-i18n="btn_cancel">Cancelar</button>
+        <button type="button" class="btn-primary" id="btnConfirmOk"
+          style="background: var(--red); border-color: var(--red);">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
