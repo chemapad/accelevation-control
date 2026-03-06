@@ -56,11 +56,12 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px 12px;
-  background: var(--bg-secondary);
+  background: var(--accent);
   border-bottom: 1px solid var(--glass-border);
   position: sticky;
   top: 0;
   z-index: 100;
+  color: white;
 }
 
 .header-logo {
@@ -72,13 +73,16 @@ body {
 .app-logo {
   height: 32px;
   width: auto;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .app-header h1 {
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--text-primary);
+  color: white;
 }
 
 .btn-icon {
@@ -89,10 +93,11 @@ body {
   padding: 6px;
   border-radius: 8px;
   transition: background var(--transition);
+  filter: brightness(0) invert(1);
 }
 
 .btn-icon:hover {
-  background: var(--bg-card-hover);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ===== TABS ===== */
