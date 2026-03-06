@@ -73,9 +73,7 @@ body {
 .app-logo {
   height: 32px;
   width: auto;
-  background: white;
-  padding: 4px 8px;
-  border-radius: 4px;
+  filter: brightness(0) invert(1);
 }
 
 .app-header h1 {
@@ -88,12 +86,18 @@ body {
 .btn-icon {
   background: none;
   border: none;
-  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
-  transition: background var(--transition);
-  filter: brightness(0) invert(1);
+  padding: 8px;
+  border-radius: 50%;
+  transition: all var(--transition);
+  color: white;
+}
+
+.btn-icon svg {
+  fill: currentColor;
 }
 
 .btn-icon:hover {
